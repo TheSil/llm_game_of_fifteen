@@ -10,7 +10,7 @@ screen = pygame.display.set_mode((window_size, window_size))
 pygame.display.set_caption("LLM - Game of Fifteen")
 
 # Colors
-background_color = (230, 230, 230)  # Light gray for empty space
+background_color = (200, 200, 200)  # Slightly darker gray for the empty space
 text_color = (255, 255, 255)  # White for text
 tile_color = (0, 120, 215)  # Blue for tiles
 line_color = (0, 0, 0)  # Black for lines
@@ -19,7 +19,11 @@ win_overlay_color = (0, 200, 0, 127)  # Green with transparency for the win over
 # Grid settings
 grid_size = 4
 cell_size = window_size // grid_size
-font = pygame.font.Font(None, 40)
+
+# Try to load a more playful system font
+font_name = "Comic Sans MS"  # Comic Sans is generally considered more "playful"
+font_size = 40
+font = pygame.font.SysFont(font_name, font_size)
 
 
 def initialize_tiles():
