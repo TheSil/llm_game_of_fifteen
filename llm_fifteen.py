@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import time  # Import time module for sleep
 
 # Initialize Pygame
 pygame.init()
@@ -18,6 +19,7 @@ text_color = (255, 255, 255)  # White for text
 background_color = (230, 230, 230)  # Light grey color
 highlight_color = (175, 238, 238)  # Lighter version for the highlight
 shadow_color = (95, 158, 160)  # Darker version for the shadow
+overlay_color = (0, 0, 0, 128)  # Semi-transparent overlay color
 
 # Define border thickness
 border_thickness = 3
@@ -38,6 +40,7 @@ animation_start_pos = ()
 
 # Font settings
 font = pygame.font.SysFont("comicsansms", 30)
+win_font = pygame.font.SysFont("comicsansms", 40)  # Larger font for winning message
 
 def init_tiles():
     global tile_numbers
@@ -114,6 +117,23 @@ def draw_empty_tile_border(x, y):
 
     pygame.draw.rect(screen, border_color, rect, border_thickness)  # Draw border
 
+def check_win_condition():
+    if tile_numbers[:-1] == list(range(1, grid_size * grid_size)) and tile_numbers[-1] == 0:
+        display_win_message()
+        pygame.display.flip()  # Ensure the win message is displayed
+        time.sleep(2)  # Pause for 2 seconds to show the win message
+        init_tiles()  # Restart the game by re-initializing the tiles
+
+def display_win_message():
+    overlay = pygame.Surface((window_size, window_size), pygame.SRCALPHA)  # Create a transparent surface
+    overlay.fill(overlay_color)  # Fill the surface with the semi-transparent color
+    screen.blit(overlay, (0, 0))  # Draw the overlay on the screen
+
+    win_text = "You Win!"
+    text_surface = win_font.render(win_text, True, text_color)
+    text_rect = text_surface.get_rect(center=(window_size // 2, window_size // 2))
+    screen.blit(text_surface, text_rect)
+
 def update_animation():
     global is_animating
     now = pygame.time.get_ticks()
@@ -130,9 +150,10 @@ def update_animation():
     else:
         # Animation finished
         is_animating = False
-        tile_numbers[moving_tile_index] = 0  # Mark the old position as empty
-        tile_numbers[moving_tile_index + (animation_target_pos[1] // cell_size - animation_start_pos[1] // cell_size) * grid_size + (animation_target_pos[0] // cell_size - animation_start_pos[0] // cell_size)] = moving_tile_number
-
+        # Update the tile positions in the list
+        target_index = moving_tile_index + (animation_target_pos[1] // cell_size - animation_start_pos[1] // cell_size) * grid_size + (animation_target_pos[0] // cell_size - animation_start_pos[0] // cell_size)
+        tile_numbers[moving_tile_index], tile_numbers[target_index] = tile_numbers[target_index], tile_numbers[moving_tile_index]
+        check_win_condition()  # Check if the puzzle is solved
 def handle_mouse_click(position):
     x, y = position
     col, row = x // cell_size, y // cell_size
