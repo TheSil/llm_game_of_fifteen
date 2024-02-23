@@ -8,12 +8,13 @@ pygame.init()
 # Nastavení okna
 window_size = 400
 screen = pygame.display.set_mode((window_size, window_size))
-pygame.display.set_caption("4x4 Grid Game - Tiles Keep Their Numbers")
+pygame.display.set_caption("4x4 Grid Game - Colored Tiles and Empty Space")
 
 # Barvy
-background_color = (255, 255, 255)
-text_color = (0, 0, 0)
-line_color = (0, 0, 0)
+background_color = (230, 230, 230)  # Světle šedá pro prázdný prostor
+text_color = (255, 255, 255)  # Bílá pro text
+tile_color = (0, 120, 215)  # Modrá pro kousky
+line_color = (0, 0, 0)  # Černá pro čáry
 
 # Nastavení mřížky
 grid_size = 4
@@ -28,12 +29,17 @@ empty_tile_index = tiles.index(0)  # Index prázdného políčka
 def draw_grid():
     screen.fill(background_color)
 
-    # Vykreslení čísel a čar
+    # Vykreslení kousků s barvou pozadí
     for index, tile in enumerate(tiles):
+        row, col = divmod(index, grid_size)
+        rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
         if tile != 0:
-            row, col = divmod(index, grid_size)
+            pygame.draw.rect(screen, tile_color, rect)  # Barva pozadí pro kousky
             text = font.render(str(tile), True, text_color)
-            screen.blit(text, (col * cell_size + cell_size // 3, row * cell_size + cell_size // 4))
+            text_rect = text.get_rect(center=rect.center)
+            screen.blit(text, text_rect)
+        else:
+            pygame.draw.rect(screen, background_color, rect)  # Světle šedá pro prázdný prostor
 
     for x in range(1, grid_size):
         pygame.draw.line(screen, line_color, (x * cell_size, 0), (x * cell_size, window_size))
