@@ -10,11 +10,12 @@ screen = pygame.display.set_mode((window_size, window_size))
 pygame.display.set_caption("LLM - Game of Fifteen")
 
 # Define colors
-background_color = (255, 255, 255)  # White background
-tile_color = (0, 0, 255)  # Blue tiles
-empty_tile_color = (170, 170, 170)  # Gray for empty tile
-text_color = (255, 255, 255)  # White text for better contrast on blue tiles
-border_color = (0, 0, 0)  # Black border for tiles
+tile_color = (0, 0, 255)  # Blue for normal tiles
+empty_tile_color = (200, 200, 200)  # Gray for the empty tile
+moving_tile_color = (255, 0, 0)  # Red for the moving tile, or choose a different color if preferred
+border_color = (0, 0, 0)  # Black for borders
+text_color = (255, 255, 255)  # White for text
+background_color = (230, 230, 230)  # Light grey color
 
 # Define border thickness
 border_thickness = 3
@@ -57,31 +58,29 @@ def shuffle_tiles():
 
 
 def draw_tile(x, y, number, is_moving=False):
-    # Determine the color based on whether the tile is empty
     color = empty_tile_color if number == 0 else tile_color
-
-    # Calculate the tile's rectangle area
     rect = pygame.Rect(x, y, cell_size, cell_size)
+    pygame.draw.rect(screen, color, rect)  # Draw the tile
 
-    # Draw the tile
-    pygame.draw.rect(screen, color, rect)  # Use the determined color
+    pygame.draw.rect(screen, border_color, rect, 3)  # Draw the border
 
-    # Draw border for all tiles
-    pygame.draw.rect(screen, border_color, rect, border_thickness)
-
-    # Draw the number for non-empty tiles
-    if number > 0:
+    if number > 0:  # Only draw numbers for non-empty tiles
         text_surface = font.render(str(number), True, text_color)
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
 
+
 # Make sure to call draw_grid_lines() at the end of the draw_grid() function if not animating
-def draw_grid(skip_index=None):
-    global tile_numbers
+def draw_grid():
+    global tile_numbers  # Ensure tile_numbers is accessible
     for i in range(grid_size):
         for j in range(grid_size):
             index = i * grid_size + j
-            if index != skip_index:  # Skip drawing the tile at skip_index
+            if is_animating and index == moving_tile_index:
+                # Draw only the border and background for the empty spot
+                x, y = j * cell_size, i * cell_size
+                draw_empty_tile_border(x, y)
+            else:
                 x, y = j * cell_size, i * cell_size
                 draw_tile(x, y, tile_numbers[index])
 
@@ -94,6 +93,14 @@ def start_animation(from_index, to_index):
     moving_tile_number = tile_numbers[from_index]
     animation_start_pos = (from_index % grid_size * cell_size, from_index // grid_size * cell_size)
     animation_target_pos = (to_index % grid_size * cell_size, to_index // grid_size * cell_size)
+    # Draw the empty tile space in gray immediately
+    draw_tile(*animation_target_pos, 0, is_moving=True)  # Pass the position and 0 for the empty tile
+
+
+def draw_empty_tile_border(x, y):
+    rect = pygame.Rect(x, y, cell_size, cell_size)
+    pygame.draw.rect(screen, empty_tile_color, rect)  # Fill with empty tile color
+    pygame.draw.rect(screen, border_color, rect, border_thickness)  # Draw border
 
 
 def draw_grid_lines():
@@ -108,21 +115,19 @@ def update_animation():
     now = pygame.time.get_ticks()
     progress = min(1, (now - animation_start_time) / animation_duration)
 
+    screen.fill(background_color)  # Clear the screen
+    draw_grid()  # Draw the grid, including the empty tile with its border
+
     if progress < 1:
-        # Calculate current animated tile position
+        # Calculate the moving tile's current position
         current_x = animation_start_pos[0] + (animation_target_pos[0] - animation_start_pos[0]) * progress
         current_y = animation_start_pos[1] + (animation_target_pos[1] - animation_start_pos[1]) * progress
-        # Draw everything except the moving tile
-        screen.fill(background_color)  # Clear screen
-        draw_grid(skip_index=moving_tile_index)  # Draw the static tiles, skipping the moving tile's original position
-        # Draw moving tile on top
-        draw_tile(current_x, current_y, moving_tile_number, is_moving=True)
+        draw_tile(current_x, current_y, moving_tile_number, is_moving=True)  # Draw moving tile on top
     else:
-        # Animation complete, finalize state
         is_animating = False
         finalize_move()
 
-    pygame.display.flip()  # Update the display
+    pygame.display.flip()  # Refresh the display
 
 def finalize_move():
     # Swap tiles in the list to reflect the new state
