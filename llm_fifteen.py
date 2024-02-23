@@ -1,46 +1,46 @@
 import pygame
-import sys
 import random
 
-# Inicializace Pygame
+# Initialize Pygame
 pygame.init()
 
-# Nastavení okna
+# Window settings
 window_size = 400
 screen = pygame.display.set_mode((window_size, window_size))
-pygame.display.set_caption("4x4 Grid Game - Colored Tiles and Empty Space")
+pygame.display.set_caption("LLM - Game of Fifteen")
 
-# Barvy
-background_color = (230, 230, 230)  # Světle šedá pro prázdný prostor
-text_color = (255, 255, 255)  # Bílá pro text
-tile_color = (0, 120, 215)  # Modrá pro kousky
-line_color = (0, 0, 0)  # Černá pro čáry
+# Colors
+background_color = (230, 230, 230)  # Light gray for empty space
+text_color = (255, 255, 255)  # White for text
+tile_color = (0, 120, 215)  # Blue for tiles
+line_color = (0, 0, 0)  # Black for lines
 
-# Nastavení mřížky
+# Grid settings
 grid_size = 4
 cell_size = window_size // grid_size
 font = pygame.font.Font(None, 40)
 
-# Inicializace stavu políček
-tiles = list(range(1, grid_size * grid_size)) + [0]  # 0 reprezentuje prázdné políčko
-empty_tile_index = tiles.index(0)  # Index prázdného políčka
+# Initialize tile states
+tiles = list(range(1, grid_size * grid_size)) + [0]  # 0 represents the empty space
+empty_tile_index = tiles.index(0)  # Index of the empty space
 
 
 def draw_grid():
     screen.fill(background_color)
 
-    # Vykreslení kousků s barvou pozadí
+    # Draw tiles with background color
     for index, tile in enumerate(tiles):
         row, col = divmod(index, grid_size)
         rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
         if tile != 0:
-            pygame.draw.rect(screen, tile_color, rect)  # Barva pozadí pro kousky
+            pygame.draw.rect(screen, tile_color, rect)  # Background color for tiles
             text = font.render(str(tile), True, text_color)
             text_rect = text.get_rect(center=rect.center)
             screen.blit(text, text_rect)
         else:
-            pygame.draw.rect(screen, background_color, rect)  # Světle šedá pro prázdný prostor
+            pygame.draw.rect(screen, background_color, rect)  # Light gray for empty space
 
+    # Draw grid lines
     for x in range(1, grid_size):
         pygame.draw.line(screen, line_color, (x * cell_size, 0), (x * cell_size, window_size))
         pygame.draw.line(screen, line_color, (0, x * cell_size), (window_size, x * cell_size))
@@ -53,19 +53,19 @@ def swap_tiles(clicked_index):
     row_empty, col_empty = divmod(empty_tile_index, grid_size)
     row_clicked, col_clicked = divmod(clicked_index, grid_size)
 
-    # Kontrola, jestli je kliknuté políčko vedle prázdného
+    # Check if the clicked tile is adjacent to the empty space
     if abs(row_empty - row_clicked) + abs(col_empty - col_clicked) == 1:
-        # Prohodit čísla v seznamu tiles
+        # Swap numbers in the tiles list
         tiles[empty_tile_index], tiles[clicked_index] = tiles[clicked_index], tiles[empty_tile_index]
         empty_tile_index = clicked_index
 
 
 def shuffle_grid():
     global empty_tile_index
-    moves = [1, -1, grid_size, -grid_size]  # Možné indexové posuny
-    for _ in range(100):  # Počet zamíchání
+    moves = [1, -1, grid_size, -grid_size]  # Possible index moves
+    for _ in range(100):  # Number of shuffles
         possible_moves = [empty_tile_index + move for move in moves if 0 <= empty_tile_index + move < grid_size ** 2]
-        # Filtr pro validní tahy
+        # Filter for valid moves
         possible_moves = [move for move in possible_moves if
                           (empty_tile_index % grid_size != 0 or move - empty_tile_index != -1) and (
                                       empty_tile_index % grid_size != grid_size - 1 or move - empty_tile_index != 1)]
@@ -81,19 +81,18 @@ def get_click_position(pos):
     return row * grid_size + col
 
 
-shuffle_grid()  # Zamíchání puzzle při startu
+shuffle_grid()  # Shuffle the puzzle at the start
+draw_grid()  # Draw the initial shuffled grid
 
-# Hlavní smyčka hry
+# Main loop
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Levé tlačítko myši
-            clicked_index = get_click_position(event.pos)
-            swap_tiles(clicked_index)
-
-    draw_grid()
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            click_pos = get_click_position(pygame.mouse.get_pos())
+            swap_tiles(click_pos)
+            draw_grid()
 
 pygame.quit()
-sys.exit()
