@@ -21,9 +21,14 @@ grid_size = 4
 cell_size = window_size // grid_size
 font = pygame.font.Font(None, 40)
 
-# Initialize tile states
-tiles = list(range(1, grid_size * grid_size)) + [0]  # 0 represents the empty space
-empty_tile_index = tiles.index(0)  # Index of the empty space
+
+def initialize_tiles():
+    global tiles, empty_tile_index
+    tiles = list(range(1, grid_size * grid_size)) + [0]  # 0 represents the empty space
+    empty_tile_index = tiles.index(0)  # Index of the empty space
+
+
+initialize_tiles()
 
 
 def draw_grid():
@@ -95,6 +100,12 @@ def get_click_position(pos):
     return row * grid_size + col
 
 
+def reset_game():
+    initialize_tiles()
+    shuffle_grid()
+    draw_grid()
+
+
 shuffle_grid()
 draw_grid()
 
@@ -104,12 +115,16 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN and not win_displayed:
-            click_pos = get_click_position(pygame.mouse.get_pos())
-            swap_tiles(click_pos)
-            draw_grid()
-            if check_win_condition():
-                display_win_message()
-                win_displayed = True
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if win_displayed:
+                win_displayed = False  # Reset the win_displayed flag
+                reset_game()  # Reset and shuffle the puzzle for a new game
+            else:
+                click_pos = get_click_position(pygame.mouse.get_pos())
+                swap_tiles(click_pos)
+                draw_grid()
+                if check_win_condition():
+                    display_win_message()
+                    win_displayed = True
 
 pygame.quit()
