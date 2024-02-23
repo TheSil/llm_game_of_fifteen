@@ -62,6 +62,18 @@ def draw_tile(x, y, number, is_moving=False):
     rect = pygame.Rect(x, y, cell_size, cell_size)
     pygame.draw.rect(screen, color, rect)  # Draw the tile
 
+    # Shadow and highlight colors
+    highlight_color = (175, 238, 238)  # Lighter version for the highlight
+    shadow_color = (95, 158, 160)  # Darker version for the shadow
+
+    # Highlight (Top and Left edges)
+    pygame.draw.line(screen, highlight_color, rect.topleft, rect.topright, border_thickness)  # Top edge
+    pygame.draw.line(screen, highlight_color, rect.topleft, rect.bottomleft, border_thickness)  # Left edge
+
+    # Shadow (Bottom and Right edges)
+    pygame.draw.line(screen, shadow_color, rect.bottomleft, rect.bottomright, border_thickness)  # Bottom edge
+    pygame.draw.line(screen, shadow_color, rect.topright, rect.bottomright, border_thickness)  # Right edge
+
     pygame.draw.rect(screen, border_color, rect, 3)  # Draw the border
 
     if number > 0:  # Only draw numbers for non-empty tiles
@@ -99,7 +111,21 @@ def start_animation(from_index, to_index):
 
 def draw_empty_tile_border(x, y):
     rect = pygame.Rect(x, y, cell_size, cell_size)
+
+    # Shadow and highlight colors
+    highlight_color = (175, 238, 238)  # Lighter version for the highlight
+    shadow_color = (95, 158, 160)  # Darker version for the shadow
+
     pygame.draw.rect(screen, empty_tile_color, rect)  # Fill with empty tile color
+
+    # Highlight (Top and Left edges)
+    pygame.draw.line(screen, highlight_color, rect.topleft, rect.topright, border_thickness)  # Top edge
+    pygame.draw.line(screen, highlight_color, rect.topleft, rect.bottomleft, border_thickness)  # Left edge
+
+    # Shadow (Bottom and Right edges)
+    pygame.draw.line(screen, shadow_color, rect.bottomleft, rect.bottomright, border_thickness)  # Bottom edge
+    pygame.draw.line(screen, shadow_color, rect.topright, rect.bottomright, border_thickness)  # Right edge
+
     pygame.draw.rect(screen, border_color, rect, border_thickness)  # Draw border
 
 def update_animation():
