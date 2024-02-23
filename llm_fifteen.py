@@ -7,7 +7,7 @@ pygame.init()
 # Nastavení okna
 window_size = 400
 screen = pygame.display.set_mode((window_size, window_size))
-pygame.display.set_caption("4x4 Grid Game")
+pygame.display.set_caption("4x4 Grid Game - Empty Last Square")
 
 # Barvy
 background_color = (255, 255, 255)
@@ -24,12 +24,13 @@ def draw_grid():
     # Vyčištění obrazovky
     screen.fill(background_color)
 
-    # Vykreslení čísel a čar
+    # Vykreslení čísel a čar, kromě posledního políčka
     for row in range(grid_size):
         for col in range(grid_size):
             number = row * grid_size + col + 1
-            text = font.render(str(number), True, text_color)
-            screen.blit(text, (col * cell_size + cell_size // 3, row * cell_size + cell_size // 4))
+            if number < grid_size * grid_size:  # Pokud to není poslední číslo, vykresli ho
+                text = font.render(str(number), True, text_color)
+                screen.blit(text, (col * cell_size + cell_size // 3, row * cell_size + cell_size // 4))
 
     # Vykreslení čar mřížky
     for x in range(1, grid_size):
