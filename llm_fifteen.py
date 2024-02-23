@@ -1,10 +1,37 @@
 import pygame
 import random
 import sys
-import time  # Import time module for sleep
+import numpy
+import time
 
 # Initialize Pygame
 pygame.init()
+
+# Initialize Pygame mixer
+pygame.mixer.init()
+
+# Generate a simple "beep" sound
+def generate_beep_sound(frequency=220, volume=0.1, duration=50):
+    """
+    Generates a simple beep sound with adjusted parameters for a less loud and annoying experience.
+    :param frequency: Frequency of the beep in Hz. Lowered to 220 for a deeper sound.
+    :param volume: Volume of the beep, from 0.0 to 1.0. Reduced to 0.1 for lower volume.
+    :param duration: Duration of the beep in milliseconds. Shortened to 50ms for a quicker beep.
+    :return: A Pygame Sound object.
+    """
+    sample_rate = 44100
+    n_samples = int(round(duration * sample_rate / 1000))
+    buf = numpy.zeros((n_samples, 2), dtype = numpy.int16)
+    max_sample = 2**(16 - 1) - 1
+    for s in range(n_samples):
+        t = float(s) / sample_rate  # Time in seconds
+        buf[s][0] = int(round(max_sample * volume * numpy.sin(2 * numpy.pi * frequency * t)))  # Left channel
+        buf[s][1] = int(round(max_sample * volume * numpy.sin(2 * numpy.pi * frequency * t)))  # Right channel
+    sound = pygame.sndarray.make_sound(buf)
+    return sound
+
+# Create a beep sound
+beep_sound = generate_beep_sound()
 
 # Window settings
 window_size = 400
@@ -92,6 +119,7 @@ def draw_grid():
                 x, y = j * cell_size, i * cell_size
                 draw_tile(x, y, tile_numbers[index])
 
+
 def start_animation(from_index, to_index):
     global is_animating, animation_start_time, moving_tile_index, moving_tile_number, animation_target_pos, animation_start_pos
     is_animating = True
@@ -102,6 +130,9 @@ def start_animation(from_index, to_index):
     animation_target_pos = (to_index % grid_size * cell_size, to_index // grid_size * cell_size)
     # Draw the empty tile space in gray immediately
     draw_tile(*animation_target_pos, 0, is_moving=True)  # Pass the position and 0 for the empty tile
+
+    # Play beep sound
+    beep_sound.play()
 
 def draw_empty_tile_border(x, y):
     rect = pygame.Rect(x, y, cell_size, cell_size)
