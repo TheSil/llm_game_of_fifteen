@@ -16,6 +16,8 @@ empty_tile_color = (200, 200, 200)  # Gray for the empty tile
 border_color = (0, 0, 0)  # Black for borders
 text_color = (255, 255, 255)  # White for text
 background_color = (230, 230, 230)  # Light grey color
+highlight_color = (175, 238, 238)  # Lighter version for the highlight
+shadow_color = (95, 158, 160)  # Darker version for the shadow
 
 # Define border thickness
 border_thickness = 3
@@ -37,12 +39,10 @@ animation_start_pos = ()
 # Font settings
 font = pygame.font.SysFont("comicsansms", 30)
 
-
 def init_tiles():
     global tile_numbers
     tile_numbers = list(range(1, grid_size * grid_size)) + [0]  # Last tile is empty
     shuffle_tiles()
-
 
 def shuffle_tiles():
     empty_index = grid_size * grid_size - 1
@@ -56,15 +56,10 @@ def shuffle_tiles():
         tile_numbers[empty_index], tile_numbers[chosen_index] = tile_numbers[chosen_index], tile_numbers[empty_index]
         empty_index = chosen_index
 
-
 def draw_tile(x, y, number, is_moving=False):
     color = empty_tile_color if number == 0 else tile_color
     rect = pygame.Rect(x, y, cell_size, cell_size)
     pygame.draw.rect(screen, color, rect)  # Draw the tile
-
-    # Shadow and highlight colors
-    highlight_color = (175, 238, 238)  # Lighter version for the highlight
-    shadow_color = (95, 158, 160)  # Darker version for the shadow
 
     # Highlight (Top and Left edges)
     pygame.draw.line(screen, highlight_color, rect.topleft, rect.topright, border_thickness)  # Top edge
@@ -81,8 +76,6 @@ def draw_tile(x, y, number, is_moving=False):
         text_rect = text_surface.get_rect(center=rect.center)
         screen.blit(text_surface, text_rect)
 
-
-# Make sure to call draw_grid_lines() at the end of the draw_grid() function if not animating
 def draw_grid():
     global tile_numbers  # Ensure tile_numbers is accessible
     for i in range(grid_size):
@@ -96,7 +89,6 @@ def draw_grid():
                 x, y = j * cell_size, i * cell_size
                 draw_tile(x, y, tile_numbers[index])
 
-
 def start_animation(from_index, to_index):
     global is_animating, animation_start_time, moving_tile_index, moving_tile_number, animation_target_pos, animation_start_pos
     is_animating = True
@@ -108,14 +100,8 @@ def start_animation(from_index, to_index):
     # Draw the empty tile space in gray immediately
     draw_tile(*animation_target_pos, 0, is_moving=True)  # Pass the position and 0 for the empty tile
 
-
 def draw_empty_tile_border(x, y):
     rect = pygame.Rect(x, y, cell_size, cell_size)
-
-    # Shadow and highlight colors
-    highlight_color = (175, 238, 238)  # Lighter version for the highlight
-    shadow_color = (95, 158, 160)  # Darker version for the shadow
-
     pygame.draw.rect(screen, empty_tile_color, rect)  # Fill with empty tile color
 
     # Highlight (Top and Left edges)
@@ -140,73 +126,51 @@ def update_animation():
         # Calculate the moving tile's current position
         current_x = animation_start_pos[0] + (animation_target_pos[0] - animation_start_pos[0]) * progress
         current_y = animation_start_pos[1] + (animation_target_pos[1] - animation_start_pos[1]) * progress
-        draw_tile(current_x, current_y, moving_tile_number, is_moving=True)  # Draw moving tile on top
+        draw_tile(current_x, current_y, moving_tile_number, is_moving=True)
     else:
+        # Animation finished
         is_animating = False
-        finalize_move()
+        tile_numbers[moving_tile_index] = 0  # Mark the old position as empty
+        tile_numbers[moving_tile_index + (animation_target_pos[1] // cell_size - animation_start_pos[1] // cell_size) * grid_size + (animation_target_pos[0] // cell_size - animation_start_pos[0] // cell_size)] = moving_tile_number
 
-    pygame.display.flip()  # Refresh the display
-
-
-def check_win_condition():
-    # Check if all tiles are in the correct order
-    return tile_numbers == list(range(1, grid_size * grid_size)) + [0]
-
-def display_win_message():
-    # Create a semi-transparent surface
-    overlay = pygame.Surface((window_size, window_size), pygame.SRCALPHA)  # Use SRCALPHA to support alpha transparency
-    overlay.fill((0, 255, 0, 128))  # Green overlay with alpha (128 for semi-transparent)
-
-    # Blit the semi-transparent overlay onto the screen
-    screen.blit(overlay, (0, 0))
-
-    # Draw the win text directly onto the screen, over the overlay
-    win_text = "You Win!"
-    text_surface = font.render(win_text, True, (255, 255, 255))  # White text
-    text_rect = text_surface.get_rect(center=(window_size / 2, window_size / 2))
-    screen.blit(text_surface, text_rect)  # Blit text onto the screen, not the overlay
-
-    pygame.display.flip()
-    pygame.time.wait(1000)  # Short wait to display the message before resetting
-
-def finalize_move():
-    # Swap tiles in the list to reflect the new state
+def handle_mouse_click(position):
+    x, y = position
+    col, row = x // cell_size, y // cell_size
+    index_clicked = row * grid_size + col
     empty_index = tile_numbers.index(0)
-    tile_numbers[moving_tile_index], tile_numbers[empty_index] = 0, moving_tile_number
-    # Check for win condition
-    if check_win_condition():
-        display_win_message()
-        pygame.time.wait(2000)  # Wait for 2 seconds to let the player see the win message
-        init_tiles()  # Reinitialize the game to start a new one
-    else:
-        # If not won, continue as usual
-        screen.fill(background_color)
-        draw_grid()
+
+    # Check if the clicked tile is adjacent to the empty space
+    if index_clicked == empty_index - 1 and empty_index % grid_size != 0 or \
+       index_clicked == empty_index + 1 and empty_index % grid_size != grid_size - 1 or \
+       index_clicked == empty_index - grid_size or \
+       index_clicked == empty_index + grid_size:
+        start_animation(index_clicked, empty_index)
+
+def main():
+    init_tiles()
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and not is_animating:
+                # Handle left click
+                if event.button == 1:  # Left mouse button
+                    handle_mouse_click(event.pos)
+
+        if not is_animating:
+            # Update and draw logic when not animating
+            screen.fill(background_color)
+            draw_grid()
+        else:
+            # Handle animation
+            update_animation()
+
         pygame.display.flip()
 
+    pygame.quit()
+    sys.exit()
 
-init_tiles()
-
-# Main game loop
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN and not is_animating:
-            x, y = pygame.mouse.get_pos()
-            clicked_index = x // cell_size + (y // cell_size) * grid_size
-            empty_index = tile_numbers.index(0)
-            # Check if the clicked tile is adjacent to the empty tile
-            if clicked_index in [empty_index - 1, empty_index + 1, empty_index - grid_size, empty_index + grid_size]:
-                start_animation(clicked_index, empty_index)
-
-    screen.fill(background_color)
-    if is_animating:
-        update_animation()
-    else:
-        draw_grid()
-    pygame.display.flip()
-
-pygame.quit()
+if __name__ == "__main__":
+    main()
